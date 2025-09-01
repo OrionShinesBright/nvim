@@ -2,7 +2,7 @@
 This is the setup I have arrived at for neovim, after.. not that long actually lol. This is still a very immature setup, and does many things wrong, and I am ok with that. Will continue to try and make it better.
 
 # Installation
-> [!warning] Non-Standard Organization
+> [!warning]
 > This entire setup is that of a control freak. It downloads the tarball for neovim (nightly, for now, since I'm using some 0.12 features), and extracts it straight into the ~/.config/nvim directory. It installs all plugins manually or through a shell-script (very smol, I have it configured in this repo), and puts them directly into the aforemention directory. Almost all paths are controlled from lua/core.
 ## Backup
 If you you have an existing nvim setup, you may want to back that stuff up:
