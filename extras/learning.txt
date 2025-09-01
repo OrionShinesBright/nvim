@@ -1,0 +1,5 @@
+Folds can be managed as follows:
+zf<motion> - create  fold
+zc         - close   fold
+zo         - open    fold
+zd         - delete  fold

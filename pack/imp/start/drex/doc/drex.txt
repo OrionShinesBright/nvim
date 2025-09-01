@@ -1,0 +1,799 @@
+*drex.txt*                               Another directory explorer for Neovim
+
+License:	GLP3
+Website:	https://github.com/TheBlob42/drex.nvim
+
+==============================================================================
+FEATURES                                                       *drex-features*
+
+- easily navigate through your file system
+- split window and project drawer support
+- add, copy, move, rename and delete elements
+- mark and operate on multiple elements
+- automatic file system synchronization
+- powered by `libuv` (see |vim.loop|)
+
+==============================================================================
+WIKI                                                               *drex-wiki*
+
+This help file should cover all the basics about the usage and configuration
+of DREX. If you want to have a look at more configuration examples, custom
+functions etc. beyond this document check out the wiki hosted on Github:
+
+https://github.com/TheBlob42/drex.nvim/wiki
+
+==============================================================================
+INSTALLATION                                               *drex-installation*
+
+The plugin requires Neovim version >= 0.7
+
+PACKER~
+(https://github.com/wbthomason/packer.nvim)
+>
+	use {
+		'theblob42/drex.nvim',
+		requires = 'kyazdani42/nvim-web-devicons', -- optional
+	}
+<
+VIM-PLUG~
+(https://github.com/junegunn/vim-plug)
+>
+	Plug 'theblob42/drex.nvim'
+	Plug 'kyazdani42/nvim-web-devicons' " optional
+<
+You only need to install `nvim-web-devicons` if you like to have nice file
+type icons. The plugin works fine without it.
+
+==============================================================================
+USAGE                                                             *drex-usage*
+
+Open a DREX buffer in the current working directory:
+>
+	:Drex
+<
+You can also provide a target path:
+>
+	:Drex ~/projects
+<
+To open the parent directory of the current file:
+>
+	:Drex %:h
+<
+Note: See |cmdline-special| and |filename-modifiers|
+
+DREX also comes with a simple project drawer functionality:
+>
+	:DrexDrawerOpen
+<
+See |drex-commands| for more available commands
+                                                    *drex-default-keybindings*
+
+- Use `j` and `k` like in any other VIM buffer to navigate up and down
+- `v` is mapped to `V` because there is no need for charwise selection
+
+Basic navigation~
+
+- `l` expands the current element
+  - If it is a directory open its content in a subtree
+  - If it is a file open the file in the current window
+  - `<Right>` and `<2-LeftMouse>` are alternative keybindings
+- `h` collapses the current directories subtree
+  - If the element under the cursor is an open directory collapse it
+  - Otherwise collapse the parent directory of the element
+  - `<Left>` and `<RightMouse>` are alternative keybindings
+- `<C-v>` opens a file in a vertical split
+- `<C-x>` opens a file in a horizontal split
+- `<C-t>` opens a file in a new tab
+- `<F5>` reloads the current directory (dependent on the cursor position)
+- `<C-h>` opens a new DREX buffer in the parent directory of the current root
+- `<C-l>` opens the directory under the cursor in a new DREX buffer
+
+Jumping~
+
+- `gj` jumps to the next sibling
+- `gk` jumps to the previous sibling
+- `gh` jumps to the parent directory of the current element
+
+Clipboard~
+
+- `m` marks or unmarks the current element (add or remove it from the clipboard)
+- `M` marks the current element (add it to the clipboard)
+- `u` unmarks the current element (remove it from the clipboard)
+- `cc` clears the clipboard content
+- `cs` to show and edit the content of the clipboard in a floating window
+
+File Actions~
+
+- `s` shows the stats for the current element
+- `a` creates a new file or directory
+  - to create a new directory end your input with a `/`
+  - non-existent parent directories will be created
+    (e.g. `foo/bar/file` will create `foo` and `bar` if they don't exist yet)
+- `d` deletes the element under the cursor (or the visual selection)
+- `D` deletes all elements currently contained in the clipboard
+- `p` copies all elements from the clipboard to the path under the cursor
+  - this will NOT clear the clipboard, so you can continue to paste elsewhere
+- `P` moves all elements from the clipboard to the path under the cursor
+- `r` renames the element under the cursor (or the visual selection)
+  - this can move the element to another location
+  - non-existent parent directories will be created
+    (e.g. `foo/bar/file` will create `foo` and `bar` if they don't exist yet)
+- `R` to multi rename all elements from the clipboard
+
+Search~
+
+- `/` searches for visible elements (see |drex-search|)
+
+Copy strings~
+
+- `y` copies the name of the element under the cursor
+- `Y` copies the relative path of the element under the cursor
+- `<C-Y>` copies the absolute path of the element under the cursor
+
+Note: In visual mode these copy all selected elements (separated by "\n")
+
+==============================================================================
+CONFIGURATION                                             *drex-configuration*
+
+There is no initial setup needed for DREX.
+However you may configure certain settings to your liking.
+
+                                                  *drex-default-configuration*
+>
+    require('drex.config').configure {
+		icons = {
+			file_default = "",
+			dir_open = "",
+			dir_closed = "",
+			link = "",
+			others = "",
+		},
+		actions = {
+			files = {
+				delete_cmd = nil,
+			},
+		},
+		colored_icons = true,
+		hide_cursor = true,
+		hijack_netrw = false,
+		keepalt = false,
+		sorting = function(a, b)
+			local aname, atype = a[1], a[2]
+			local bname, btype = b[1], b[2]
+
+			local aisdir = atype == 'directory'
+			local bisdir = btype == 'directory'
+
+			if aisdir ~= bisdir then
+				return aisdir
+			end
+
+			return aname < bname
+		end,
+		drawer = {
+			side = 'left',
+			default_width = 30,
+			window_picker = {
+				enabled = true,
+				labels = 'abcdefghijklmnopqrstuvwxyz',
+			},
+		},
+		disable_default_keybindings = false,
+		keybindings = {
+			['n'] = {
+				['v'] = 'V',
+				['l'] = { '<cmd>lua require("drex.elements").expand_element()<CR>', { desc = 'expand element' }},
+				['h'] = { '<cmd>lua require("drex.elements").collapse_directory()<CR>', { desc = 'collapse directory' }},
+				['<right>'] = { '<cmd>lua require("drex.elements").expand_element()<CR>', { desc = 'expand element' }},
+				['<left>']  = { '<cmd>lua require("drex.elements").collapse_directory()<CR>', { desc = 'collapse directory'}},
+				['<2-LeftMouse>'] = { '<LeftMouse><cmd>lua require("drex.elements").expand_element()<CR>', { desc = 'expand element' }},
+				['<RightMouse>']  = { '<LeftMouse><cmd>lua require("drex.elements").collapse_directory()<CR>', { desc = 'collapse directory' }},
+				['<C-v>'] = { '<cmd>lua require("drex.elements").open_file("vs")<CR>', { desc = 'open file in vsplit' }},
+				['<C-x>'] = { '<cmd>lua require("drex.elements").open_file("sp")<CR>', { desc = 'open file in split' }},
+				['<C-t>'] = { '<cmd>lua require("drex.elements").open_file("tabnew", true)<CR>', { desc = 'open file in new tab' }},
+				['<C-l>'] = { '<cmd>lua require("drex.elements").open_directory()<CR>', { desc = 'open directory in new buffer' }},
+				['<C-h>'] = { '<cmd>lua require("drex.elements").open_parent_directory()<CR>', { desc = 'open parent directory in new buffer' }},
+				['<F5>'] = { '<cmd>lua require("drex").reload_directory()<CR>', { desc = 'reload' }},
+				['gj'] = { '<cmd>lua require("drex.actions.jump").jump_to_next_sibling()<CR>', { desc = 'jump to next sibling' }},
+				['gk'] = { '<cmd>lua require("drex.actions.jump").jump_to_prev_sibling()<CR>', { desc = 'jump to prev sibling' }},
+				['gh'] = { '<cmd>lua require("drex.actions.jump").jump_to_parent()<CR>', { desc = 'jump to parent element' }},
+				['s'] = { '<cmd>lua require("drex.actions.stats").stats()<CR>', { desc = 'show element stats' }},
+				['a'] = { '<cmd>lua require("drex.actions.files").create()<CR>', { desc = 'create element' }},
+				['d'] = { '<cmd>lua require("drex.actions.files").delete("line")<CR>', { desc = 'delete element' }},
+				['D'] = { '<cmd>lua require("drex.actions.files").delete("clipboard")<CR>', { desc = 'delete (clipboard)' }},
+				['p'] = { '<cmd>lua require("drex.actions.files").copy_and_paste()<CR>', { desc = 'copy & paste (clipboard)' }},
+				['P'] = { '<cmd>lua require("drex.actions.files").cut_and_move()<CR>', { desc = 'cut & move (clipboard)' }},
+				['r'] = { '<cmd>lua require("drex.actions.files").rename()<CR>', { desc = 'rename element' }},
+				['R'] = { '<cmd>lua require("drex.actions.files").multi_rename("clipboard")<CR>', { desc = 'rename (clipboard)' }},
+				['/'] = { '<cmd>keepalt lua require("drex.actions.search").search()<CR>', { desc = 'search' }},
+				['M'] = { '<cmd>DrexMark<CR>', { desc = 'mark element' }},
+				['u'] = { '<cmd>DrexUnmark<CR>', { desc = 'unmark element' }},
+				['m'] = { '<cmd>DrexToggle<CR>', { desc = 'toggle element' }},
+				['cc'] = { '<cmd>lua require("drex.clipboard").clear_clipboard()<CR>', { desc = 'clear clipboard' }},
+				['cs'] = { '<cmd>lua require("drex.clipboard").open_clipboard_window()<CR>', { desc = 'edit clipboard' }},
+				['y'] = { '<cmd>lua require("drex.actions.text").copy_name()<CR>', { desc = 'copy element name' }},
+				['Y'] = { '<cmd>lua require("drex.actions.text").copy_relative_path()<CR>', { desc = 'copy element relative path' }},
+				['<C-y>'] = { '<cmd>lua require("drex.actions.text").copy_absolute_path()<CR>', { desc = 'copy element absolute path' }},
+			},
+			['v'] = {
+				['d'] = { ':lua require("drex.actions.files").delete("visual")<CR>', { desc = 'delete elements' }},
+				['r'] = { ':lua require("drex.actions.files").multi_rename("visual")<CR>', { desc = 'rename elements' }},
+				['M'] = { ':DrexMark<CR>', { desc = 'mark elements' }},
+				['u'] = { ':DrexUnmark<CR>', { desc = 'unmark elements' }},
+				['m'] = { ':DrexToggle<CR>', { desc = 'toggle elements' }},
+				['y'] = { ':lua require("drex.actions.text").copy_name(true)<CR>', { desc = 'copy element names' }},
+				['Y'] = { ':lua require("drex.actions.text").copy_relative_path(true)<CR>', { desc = 'copy element relative paths' }},
+				['<C-y>'] = { ':lua require("drex.actions.text").copy_absolute_path(true)<CR>', { desc = 'copy element absolute paths' }},
+			}
+		},
+		on_enter = nil,
+		on_leave = nil,
+    }
+<
+------------------------------------------------------------------------------
+ICONS                                               *drex-configuration-icons*
+
+Icons are used for the user as a help to quickly identify an element as well as
+for DREX to differentiate between them:
+>
+	icons = {
+        file_default = "",
+        dir_open = "",
+        dir_closed = "",
+        link = "",
+        others = "",
+	}
+	colored_icons = true,
+<
+Icons~
+
+- `file_default	`Used for file elements in case `nvim-web-devicons` is not
+				installed. No special highlighting
+- `dir_open`	A directory element with an expanded subtree
+				Highlighted with |DrexDir|
+- `dir_closed`	A directory element without expanded subtree
+				Highlighted with |DrexDir|
+- `link`		A (sym)link element
+				Highlighted with |DrexLink|
+- `others`		A non-file non-directory non-link element (FIFO, socket, etc.)
+				Highlighted with |DrexOthers|
+
+Note: If you don't see the correct default icons here you need to install and
+configure a `NerdFont` (https://www.nerdfonts.com/). Or change them to another
+character.
+
+Colored Icons~
+
+Highlight the `nvim-web-devicons` used for file types in their respective
+colors. See for example `:hi DevIconC`, `:hi DevIconVim`, etc.
+
+If you don't like colorful icons and/or prefer a more "monochromatic" look set
+this options to `false`.
+
+Note: If you have the `nvim-web-devicons` plugin not installed, this options
+does not do anything.
+
+------------------------------------------------------------------------------
+ACTIONS                                           *drex-configuration-actions*
+
+Customize certain aspects of the actions provided by DREX out of the box.
+
+FILES
+
+- `delete_cmd`	Custom command for the deletion of elements
+				Can either be a string that points to an executable on your
+				`$PATH` or a lua function
+
+An executable command will just get passed the absolute element path:
+>
+	<cmd> /home/user/doc.txt
+<
+A lua function receives the absolute element path as its first and the element
+type ("file", "directory", etc.) as its second argument:
+>
+	function custom_delete(element, type)
+		if type == 'directory' then
+			delete_dir(element)
+		else
+			delete(element)
+		end
+	end
+<
+See the following projects for some "trash" command line implementations:
+
+- https://github.com/andreafrancia/trash-cli
+- https://github.com/b4b4r07/gomi
+- https://github.com/ali-rantakari/trash
+
+------------------------------------------------------------------------------
+CURSOR                                             *drex-configuration-cursor*
+
+Since the cursor is not very valuable within a DREX buffer it is hidden by
+default with a custom |guicursor| configuration.
+>
+	hide_cursor = true
+<
+------------------------------------------------------------------------------
+HIJACK NETRW                                        *drex-configuration-netrw*
+
+Opt-in feature to use DREX as the default directory explorer in Neovim instead
+of |netrw|. This affects for example |edit| (e.g. `:edit /home/user/`) and/or
+directories passed as command line arguments (e.g. `nvim /home/user/`).
+>
+	hijack_netrw = false
+<
+Set this option to `true` to activate it.
+
+Note: This will not affect the |netrw-explore| commands
+
+Note: This option can only be activated once either on the plugin startup or
+when calling `require('drex.config').configure {}` . Once it has been set it
+can not be deactivated again (in comparison to other options) because this
+deletes the |FileExplorer| group which can not be restored.
+
+------------------------------------------------------------------------------
+KEEPALT                                           *drex-configuration-keepalt*
+
+Keep the last |alternate-file| while navigating through multiple DREX buffers.
+It behaves similar to the |g:netrw_altfile| option.
+>
+	keepalt = false
+<
+Set this option to `true` to activate it.
+
+Consider the following example with this option disabled:
+
+- start in file `A`
+- enter DREX buffer `B` (altfile `A`)
+- enter DREX buffer `C` (altfile `B`)
+- enter DREX buffer `D` (altfile `C`)
+- enter file `E`        (altfile `D`)
+
+Using |CTRL-^| in file `E` will jump back to the DREX buffer `D`. If this is
+exactly what you would expect, you might not need this option.
+
+Now consider this example with this option enabled in comparison:
+
+- start in file `A`
+- enter DREX buffer `B` (altfile `A`)
+- enter DREX buffer `C` (altfile `A`)
+- enter DREX buffer `D` (altfile `A`)
+- enter file `E`        (altfile `A`)
+
+If you use |CTRL-^| in file `E` you will be back in file `A`. The DREX buffers
+in between have been ignored for the alternate file/buffer.
+
+Note: Also see |keepalt| for more information.
+
+------------------------------------------------------------------------------
+SORTING                                           *drex-configuration-sorting*
+
+A function for sorting the elements within a DREX buffer. By default these are
+sorted directories first and otherwise alphabetically:
+>
+    sorting = function(a, b)
+        local aname, atype = a[1], a[2]
+        local bname, btype = b[1], b[2]
+
+        local aisdir = atype == 'directory'
+        local bisdir = btype == 'directory'
+
+        if aisdir ~= bisdir then
+            return aisdir
+        end
+
+        return aname < bname
+    end,
+<
+You can replace this function with any custom sorting logic that you prefer.
+
+Furthermore you can deactivate the custom sorting by just setting the value of
+`sorting` to `false`. In this case the items are just displayed as they are
+returned by `vim.loop.fs_scandir` (by default alphabetically).
+
+------------------------------------------------------------------------------
+DRAWER                                             *drex-configuration-drawer*
+
+Options specific to the |drex-drawer| functionality:
+>
+	drawer = {
+		side = 'left',
+		default_width = 30,
+		window_picker = {
+			enabled = true,
+			labels = 'abcdefghijklmnopqrstuvwxyz',
+		},
+	},
+<
+- `side` - the default side the drawer will open ('left' | 'right')
+- `default_width` - the default width of the drawer window (columns)
+
+                                                          *drex-window-picker*
+Window Picker~
+
+If there is more than one target window to open a file in from the DREX drawer
+the window picker will display a character label in each of those. By pressing
+the corresponding character the file will be opened in this window (for
+splits: the window will be used as origin). Pressing `<Esc>` or any not shown
+character will cancel.
+
+- `enabled` - automatically used when opening files from the drawer
+- `labels` - labels to use for window selection (from left to right)
+
+Note: If you disable the window picker DREX will use |CTRL-W_p| instead.
+
+------------------------------------------------------------------------------
+KEYBINDINGS                                   *drex-configuration-keybindings*
+
+For a pleasant "out of the box" experience DREX provides a set of default
+keybindings. If these defaults do not fit you, there are multiple ways to
+adapt them to your preferences.
+
+You can add or overwrite existing keybindings:
+>
+	keybindings = {
+		['n'] = {
+			['o'] = '<cmd>echo "Your command"<cr>',
+			['O'] = function()
+				print('Lua functions are also supported')
+			end,
+		}
+	}
+<
+By default the keybindings are set using |vim.keymap.set()| with the options
+|:map-silent| and |:map-nowait|, but you can add or overwrite options by
+passing your keybindings as a table (first element is the binding, second
+element are your options):
+>
+	keybindings = {
+		['n'] = {
+			['o'] = {
+				'<cmd>echo "Your command"<cr>',
+				{ desc = 'your command', silent = false }
+			},
+			['O'] = {
+				function() return "..." end,
+				{ desc = 'your function', expr = true }
+			},
+		}
+	}
+<
+You can disable a specific keybinding by setting its value to `false`:
+>
+	keybindings = {
+		['n'] = {
+			['a'] = false
+		}
+	}
+<
+To disable ALL default keybindings:
+>
+	disable_default_keybindings = true
+<
+For a list of all available default keybindings see |drex-default-keybindings|
+
+------------------------------------------------------------------------------
+CALLBACKS                                       *drex-configuration-callbacks*
+
+Custom callback functions which are called whenever you enter a DREX buffer
+(`on_enter` triggers on |BufEnter|) or when you leave it (`on_leave` triggers
+on |BufLeave|).
+>
+	on_enter = nil,
+	on_leave = nil,
+<
+When entering a DREX buffer the following options are set automatically:
+
+- |nowrap|
+- |nospell|
+- |cursorline|
+- |conceallevel| to 3
+- |concealcursor| to "nvc"
+
+You can overwrite these defaults, revert them or call any other custom logic
+you like. For example to hide line numbers (|nonumber|) within DREX buffers
+use:
+>
+	on_enter = function()
+		vim.opt_local.number = false
+	end
+<
+
+==============================================================================
+SEARCH                                                           *drex-search*
+
+DREX provides basic search functionality for finding and filtering of specific
+elements. In comparison to the basic |/| or |:g| alternatives the search only
+operates on the element names (and not its concealed part).
+
+NOTE: The search only operates on visible elements in the current DREX buffer
+
+The default keybinding for the search is set to `/` but you can also call the
+corresponding function directly with your own specific configuration:
+>
+	require('drex.actions.search').search {
+		-- your configuration
+	}
+<
+------------------------------------------------------------------------------
+SEARCH CONFIGURATION                               *drex-search-configuration*
+
+If you don't call the `search` function with a custom configuration the
+following defaults are used:
+>
+	{
+		fuzzy = true,
+		case_sensitive = false,
+		keybindings = {
+			['<C-n>'] = require('drex.actions.search').actions.goto_next,
+			['<C-p>'] = require('drex.actions.search').actions.goto_prev,
+			['<CR>']  = require('drex.actions.search').actions.jump,
+			['<ESC>'] = require('drex.actions.search').actions.close,
+			['<C-c>'] = require('drex.actions.search').actions.close,
+			['<BS>']  = require('drex.actions.search').actions.backspace,
+			['<A-m>'] = require('drex.actions.search').actions.mark_all,
+	   }
+	}
+<
+- `fuzzy` - (de)activate fuzzy matching
+- `case_sensitive` - (de)activate case sensitive matching (for normal letters)
+- `keybindings` - keybindings to execute other search related actions
+
+NOTE: If fuzzy matching is active special VIM regular expression characters
+are being escaped and matched literally. Without fuzzy matching you can use
+wildcards `.*`, branches `\(a\|b\)` etc.
+
+------------------------------------------------------------------------------
+SEARCH KEYBINDINGS                                   *drex-search-keybindings*
+
+You can easily adopt and enhance the keybindings used for the DREX search
+action by providing your own configuration.
+>
+	{
+		keybindings = {
+			-- add a completely new keybinding
+			['<Down>'] = require('drex.actions.search').actions.goto_next,
+
+			-- overwrite an existing keybinding (with a custom function)
+			['<C-p>'] = function(args)
+				...
+			end,
+
+			-- disable a default kebinding
+			['<A-m>'] = false,
+		}
+	}
+<
+- You can only map single keys.
+  Keybindings which consist of multiple keys are not supported.
+- You can only map lua functions.
+  String mappings are not applicable.
+
+Check `require('drex.actions.search').actions` to find a collection of default
+actions to use directly or for your inspiration:
+
+- `goto_next`	Move the cursor to the next search hit
+- `goto_prev`	Move the cursor to the previous search hit
+- `jump`		End search and jump to the selected element
+- `close`		Abort the search
+- `backspace`	Delete the last entered character of the search input
+- `mark_all`	Add all filtered elements to the DREX clipboard
+
+CUSTOM KEYBINDINGS~
+
+You can map your custom lua functions to operate on the given search results.
+Every mapped functions get passed an `args` table with the following keys:
+
+- `input`	The current search input string
+- `src_buf`   The original DREX buffer from which the search was initiated
+
+NOTE: To get all current search hits use |nvim_buf_get_lines()|
+NOTE: To get the current selected hit use |nvim_get_current_line()|
+
+Your custom function does not need to return anything. But you can use the
+following return types to influence the search behavior:
+
+- Return a string to replace the current search input
+- Return `true` to end the search after your action
+- Return a lua function to end the search after your action (like `true` does)
+  and also call that function afterwards
+
+EXAMPLES~
+
+Delete the whole search input at once. If the search input is already empty
+end the search instead:
+>
+	require('drex.actions.search').search {
+		keybindings = {
+			['<A-BS>'] = function(args)
+				-- end the search if the input is empty
+				if #args.input == 0 then
+					return true
+				end
+
+				return '' -- clear the search input
+			end,
+		}
+	}
+<
+Replace the search input with the content of a register:
+>
+	local function paste_from_register(_)
+		vim.cmd('redraw')
+		vim.cmd('echo "Which register? "')
+
+		local reg = vim.fn.getreginfo(vim.fn.getcharstr())
+		if vim.tbl_isempty(reg) then
+			return
+		end
+
+		return reg.regcontents[1] -- to deal with multiline registers
+	end
+
+	require('drex.actions.search').search {
+		keybindings = {
+			['<C-r>'] = paste_from_register
+		}
+	}
+<
+==============================================================================
+SESSIONS                                                       *drex-sessions*
+
+DREX buffers are restored automatically when loading a session, but there are
+some caveats you'll have to live with:
+
+- Some information is not restored by a saved session:
+  - The DREX clipboard content
+  - Expanded sub directories
+  - The drawer window¹ (so |DrexDrawerOpen| would open a new one)
+- Having a DREX buffer open in multiple windows causes problems
+
+¹To properly save the drawer windows in a session you have to add "globals" to
+the |sessionoptions| before create a session. Then they can be restored
+properly by this plugin: `set ssop+=globals`
+
+==============================================================================
+HIGHLIGHT                                                     *drex-highlight*
+
+DREX uses the following highlight groups that you can configure to your
+personal preference:
+
+	*DrexDir*
+		The group used for directory elements.
+		By default this links to |hl-Directory|.
+
+	*DrexLink*
+		The group used for (symbolic) links.
+		By default this links to "Identifier" (see |hl-NvimIdentifier|).
+
+	*DrexOthers*
+		The group used for "other" elements (e.g. FIFO, socket).
+		By default this links to "SpecialChar" (see |hl-NvimStringSpecial|).
+
+	*DrexMarked*
+		The group used for for explicitly marked elements (contained in the
+		DREX clipboard).
+		By default this links to |hl-Substitute|.
+
+	*DrexSelected*
+		The group used for indirectly selected elements. Child elements of
+		marked directories (contained in the DREX clipboard) are highlighted
+		with this group to visualize that they would also be affected by
+		actions like move, delete etc.
+		By default this links to |hl-Visual|.
+
+==============================================================================
+CUSTOMIZATION                                             *drex-customization*
+
+If you miss a certain functionality or have a very specific use case, you can
+implement a custom action very easily. Every line within a DREX buffer is just
+an absolute file path (plus some indentation and an icon) hidden via |conceal|
+(use `set conceallevel=0` to see).
+
+You can easily access the different parts of an element with the helper
+functions found `lua/drex/utils.lua`:
+>
+	local utils = require('drex.utils')
+	local line = vim.api.nvim_get_current_line()
+
+	-- extract certain parts of the current element
+	local element = utils.get_element(line)
+	local indentation = utils.get_indentation(line)
+	local icon = utils.get_icon(line)
+	local path = utils.get_path(line)
+	local name = utils.get_name(line)
+
+	-- check the current element
+	local is_dir = utils.is_directory(line)
+	local is_open_dir = utils.is_open_directory(line)
+	local is_closed_dir = utils.is_closed_directory(line)
+<
+For example to open the element under the cursor with your systems default
+application (Linux only):
+>
+	function open_with_default()
+		local line = vim.api.nvim_get_current_line()
+		local path = require('drex.utils').get_element(line)
+		vim.fn.jobstart(
+			"xdg-open '" .. path .. "' &",
+			{ detach = true }
+		)
+	end
+<
+==============================================================================
+COMMANDS                                                       *drex-commands*
+
+                                                                        *Drex*
+:Drex {url}
+	Open a DREX buffer in the current window. If no {url} is provided use
+	the current working directory. {url} can be a relative or absolute
+	path. Also supports |cmdline-special| and |filename-modifiers|
+
+                                                              *DrexDrawerOpen*
+:DrexDrawerOpen
+	Open a drawer window with a DREX buffer targeting the current working
+	directory and focus it. If the window is already open, just focus it.
+	Files will be opened in the adjacent windows, see |drex-window-picker|
+
+                                                             *DrexDrawerClose*
+:DrexDrawerClose
+	Close the current drawer window. If the window is not open this does
+	nothing.
+
+                                                            *DrexDrawerToggle*
+:DrexDrawerToggle
+	If the drawer window is closed, open and focus it. If the drawer
+	window is open, close it instead.
+
+                                                          *DrexDrawerFindFile*
+:DrexDrawerFindFile
+	Find the current file in the drawer window and jump to this element.
+	Keep the focus within the current window.
+
+                                                  *DrexDrawerFindFileAndFocus*
+:DrexDrawerFindFileAndFocus
+	Works just like |DrexDrawerFindFile| but also focus the drawer window.
+
+                                                                    *DrexMark*
+:[range]DrexMark
+	Mark the elements within [range] and them to the DREX clipboard.
+
+                                                                  *DrexUnmark*
+:[range]DrexUnmark
+	Unmark the elements within [range] and remove them from the DREX
+	clipboard.
+
+                                                                  *DrexToggle*
+:[range]DrexToggle
+	Toggle the elements within [range]. Unmark all marked ones (remove
+	them from the DREX clipboard) and mark all unmarked ones (add them to
+	the DREX clipboard).
+
+==============================================================================
+LUALINE                                               *drex-lualine-extension*
+
+If your using `lualine` (https://github.com/nvim-lualine/lualine.nvim) you can
+activate the custom DREX extension which shows the shortened directory path
+and the count of items in the current clipboard.
+>
+	require('lualine').setup {
+		extensions = { 'drex' },
+		[...]
+	}
+<
+==============================================================================
+ANNOUNCEMENT                                               *drex-announcement*
+
+With the commit `03893ebeba056b27106d769cd5340da64af9238b` DREX does
+not support any Neovim version prior to 0.7 anymore. To "fix" the issue for
+you there are three possibilities:
+
+- upgrade your Neovim version
+- switch to the `nvim-0.5` branch
+- pin the previous commit using your package manager:
+  `2d895a0a78702bd055bd12cbca55f028158f0cd3`
+
+NOTE: This announcement will be removed by the end of the year 2022
+
+==============================================================================
+vim:tw=78:sw=4:ts=4:noet:ft=help:norl

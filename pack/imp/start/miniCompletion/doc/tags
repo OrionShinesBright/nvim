@@ -1,0 +1,13 @@
+MiniCompletion	mini-completion.txt	/*MiniCompletion*
+MiniCompletion-events	mini-completion.txt	/*MiniCompletion-events*
+MiniCompletion.complete_fallback()	mini-completion.txt	/*MiniCompletion.complete_fallback()*
+MiniCompletion.complete_twostage()	mini-completion.txt	/*MiniCompletion.complete_twostage()*
+MiniCompletion.completefunc_lsp()	mini-completion.txt	/*MiniCompletion.completefunc_lsp()*
+MiniCompletion.config	mini-completion.txt	/*MiniCompletion.config*
+MiniCompletion.default_process_items()	mini-completion.txt	/*MiniCompletion.default_process_items()*
+MiniCompletion.default_snippet_insert()	mini-completion.txt	/*MiniCompletion.default_snippet_insert()*
+MiniCompletion.get_lsp_capabilities()	mini-completion.txt	/*MiniCompletion.get_lsp_capabilities()*
+MiniCompletion.scroll()	mini-completion.txt	/*MiniCompletion.scroll()*
+MiniCompletion.setup()	mini-completion.txt	/*MiniCompletion.setup()*
+MiniCompletion.stop()	mini-completion.txt	/*MiniCompletion.stop()*
+mini.completion	mini-completion.txt	/*mini.completion*

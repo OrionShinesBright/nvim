@@ -1,0 +1,21 @@
+.
+..
+after/
+	|- ftplugin/
+		|- lua.lua
+		|- typst.lua
+		|- cpp.lua
+		|- bash.lua
+extras/
+	|- learning.txt
+	|- packman/
+		|- apndln.sh
+		|- packed.txt
+		|- packman.sh
+	|- setup.sh
+init.lua
+lsp
+lua
+.luarc.json
+nvim-linux-x86_64
+pack
