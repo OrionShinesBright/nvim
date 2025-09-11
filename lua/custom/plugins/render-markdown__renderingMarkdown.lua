@@ -1,19 +1,19 @@
 require('render-markdown').setup({
     -- Whether markdown should be rendered by default.
     enabled = true,
-    render_modes = { 'n', 'c', 't' },
+    render_modes = { 'n', 'c', 't', 'v'},
     max_file_size = 10.0, -- in MB
     debounce = 100,
     -- | obsidian | mimic Obsidian UI                                          |
     -- | lazy     | will attempt to stay up to date with LazyVim configuration |
     -- | none     | does nothing                                               |
-    preset = 'obsidian',
+    preset = 'lazy',
     file_types = { 'markdown', 'typst' },
     nested = true,
     change_events = {},
     patterns = {
         markdown = {
-            disable = true,
+            disable = false,
             directives = {
                 { id = 17, name = 'conceal_lines' },
                 { id = 18, name = 'conceal_lines' },
@@ -39,7 +39,7 @@ require('render-markdown').setup({
         --   virtual_lines
         ignore = {
             code_background = true,
-            code_border = true,
+            code_border = false,
             code_language = true,
             indent = true,
             bullet = true,
@@ -98,15 +98,15 @@ require('render-markdown').setup({
         enabled = true,
         render_modes = false,
         sign = true,
-        conceal_delimiters = true,
-        language = true,
+        conceal_delimiters = false,
+        language = false,
         -- | right | right side of code block |
         -- | left  | left side of code block  |
-        position = 'left',
+        position = 'right',
         language_icon = true,
         language_name = true,
         language_info = true,
-        disable_background = false,
+        disable_background = true,
         -- | block | width of the code block  |
         -- | full  | full width of the window |
         width = 'full',
@@ -114,7 +114,7 @@ require('render-markdown').setup({
         -- | thick | use the same highlight as the code body              |
         -- | thin  | when lines are empty overlay the above & below icons |
         -- | hide  | conceal lines unless language name or icon is added  |
-        border = 'hide',
+        border = 'none',
         -- | none     | { enabled = false }                           |
         -- | normal   | { language = false }                          |
         -- | language | { disable_background = true, inline = false } |
@@ -319,7 +319,7 @@ require('render-markdown').setup({
             -- Used when not being rendered, get user setting.
             default = vim.o.conceallevel,
             -- Used when being rendered, concealed text is completely hidden.
-            rendered = 3,
+            rendered = 2,
         },
         -- @see :h 'concealcursor'
         concealcursor = {
