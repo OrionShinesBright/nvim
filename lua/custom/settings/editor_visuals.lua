@@ -6,7 +6,7 @@ vim.o.conceallevel = 3 				-- Hide Markdown
 
 vim.o.culopt = 'both' 				-- Number and cursor line highlighting
 vim.o.cursorline = true 			-- I know, right?
-vim.o.colorcolumn = "120" 			-- That blackish column you see on the right
+vim.o.colorcolumn = "80" 			-- That blackish column you see on the right
 vim.o.signcolumn = "number" 		-- Shows signs on the left
 vim.o.showtabline = 1 				-- Shows tab line above when needed
 vim.o.laststatus = 3 				-- Conditions for the last window having a status line

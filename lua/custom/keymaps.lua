@@ -1,6 +1,12 @@
 local map = vim.keymap.set
 vim.g.mapleader = " "
 
+vim.keymap.set('n', '<leader>mkhasm', function()
+	vim.cmd('norm i;*******;o')
+	vim.cmd('norm i;*******;O')
+	vim.cmd('norm i;*** ***;4hi ')
+end)
+
 vim.keymap.set('i', 'jk', function()
 	vim.lsp.completion.enable(true, 1, 0)
 	vim.lsp.completion._omnifunc(1, 1)

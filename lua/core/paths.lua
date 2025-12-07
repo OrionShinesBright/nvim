@@ -3,7 +3,7 @@ local uv = vim.loop
 local M = {}
 
 local rtp = os.getenv("VIMRUNTIME") or "$VIMRUNTIME"
-local nvimdir = "/home/orion/.config/nvim/"
+local nvimdir = "/home/system/.config/nvim/"
 local customdir = nvimdir .. "lua/custom/"
 local lazydir = customdir .. "lazy/"
 
