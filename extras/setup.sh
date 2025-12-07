@@ -24,3 +24,4 @@ if [ $? == 0 ]; then
 	cat $HOME/.bashrc | grep "alias nvim"
 fi
 rm -rfi nvim-linux-x86_64.tar.gz
+mv nvim-linux-x86_64 ..

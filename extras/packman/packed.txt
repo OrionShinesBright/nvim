@@ -1,6 +1,0 @@
-{
-
-Kurama622/profile.nvim @ main IN fun/start/profile for dashboard,
-3rd/image.nvim @ master IN fun/start/image for images,
-MeanderingProgrammer/render-markdown.nvim @ main IN fun/start/render-markdown for renderingMarkdown,
-}
